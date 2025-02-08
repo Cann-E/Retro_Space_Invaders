@@ -22,8 +22,7 @@ mixer.init()
 sound_all = mixer.Sound("Sounds/Plane_Sound_can.wav")
 
 # Assign a channel for the sound
-channel = mixer.Channel(0)  # Use channel 0 for sound
-
+channel = mixer.Channel(0)  
 # <----------Game Loop-------------->
 run = True
 while run:
