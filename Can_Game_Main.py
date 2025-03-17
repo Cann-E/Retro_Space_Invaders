@@ -1,69 +1,47 @@
-from pygame import *
-init()
-import Can_Game_Functions
+import pygame
+from Can_Game_Functions import Plane, AlienShip, Explosion, draw_background, check_collision, screen
 
-# Plane position and speed
-plane_x, plane_y = 100, 300  # Initial position of the plane
-plane_width, plane_height = 100, 75  # Size of the plane
-speed = 10
+# Initialize pygame
+pygame.init()
+clock = pygame.time.Clock()
 
-# Screen setup
-WIDTH, HEIGHT = 1200, 800  # Screen dimensions
-screen = display.set_mode((WIDTH, HEIGHT))
-display.set_caption("Cans Game")
-clock = time.Clock()
+# Create objects
+plane = Plane(100, 300, 10)
+alien_ship = AlienShip(500, 50, 5)
+explosions = []  # Stores explosion effects
 
-# Load assets
-background = transform.scale(image.load("Images/lake.jpg"), (WIDTH, HEIGHT))
-plane = transform.scale(image.load("Images/plane.png").convert_alpha(), (plane_width, plane_height))
-
-# Load sound
-mixer.init()
-sound_all = mixer.Sound("Sounds/Plane_Sound_can.wav")
-
-# Assign a channel for the sound
-channel = mixer.Channel(0)  
-# <----------Game Loop-------------->
+# Game Loop
 run = True
 while run:
-    # Draw the background
-    screen.blit(background, (0, 0))
-    # Draw the plane
-    screen.blit(plane, (plane_x, plane_y))
+    draw_background()  # Draw background
+    plane.draw()       # Draw plane
+    alien_ship.draw()  # Draw alien ship
 
-    for evnt in event.get():
-        if evnt.type == QUIT:
-            run = False  
+    # Draw explosions
+    for explosion in explosions:
+        explosion.draw()
 
-    # Handle key presses for movement
-    keys = key.get_pressed()
+    # Handle events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:  # Plane shoots when space is pressed
+                plane.shoot()
 
-    if (
-        keys[K_LEFT] and plane_x > 0 or
-        keys[K_UP] and plane_y > 0 or
-        keys[K_RIGHT] and plane_x < WIDTH - plane_width or
-        keys[K_DOWN] and plane_y < HEIGHT - plane_height
-    ):
-        # Start playing the sound if it's not already playing
-        if not channel.get_busy():
-            channel.play(sound_all, loops=-1)  
+    # Move objects
+    keys = pygame.key.get_pressed()
+    plane.move(keys)
+    alien_ship.move()
 
-        # Move the plane
-        if keys[K_LEFT] and plane_x > 0:
-            plane_x -= speed
-        if keys[K_UP] and plane_y > 0:
-            plane_y -= speed
-        if keys[K_RIGHT] and plane_x < WIDTH - plane_width:
-            plane_x += speed
-        if keys[K_DOWN] and plane_y < HEIGHT - plane_height:
-            plane_y += speed
-    else:
-        # Stop the sound when no movement keys are pressed
-        if channel.get_busy():
-            channel.stop()
+    # Check for collisions (Bullets hitting targets)
+    if check_collision(plane.bullets[:], alien_ship, explosions):  # Use a copy to avoid modifying list during iteration
+        print("Alien ship hit!")
+    if check_collision(alien_ship.bullets[:], plane, explosions):
+        print("Plane hit!")
 
-    # Update the display
-    display.update()
-    clock.tick(60)
+    # Update display
+    pygame.display.update()
+    clock.tick(60)  # Limit frame rate
 
-quit()
+pygame.quit()
